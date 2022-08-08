@@ -1,5 +1,5 @@
 .container {
-    margin-bottom: 6rem;
+    margin-bottom: 1rem;
     position: relative;
     z-index: 2;
   }
@@ -53,6 +53,9 @@
     background-color: var(--text-purple-dark);
   }
   
+  .sectionWrapper{
+    margin-top:5rem;
+  }
   /** 
     Breakpoints:
     ------------
