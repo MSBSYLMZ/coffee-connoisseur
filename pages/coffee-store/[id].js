@@ -9,6 +9,7 @@ import { selectCoffeeStores } from "contexts/store/store.selectors";
 import { useContext, useEffect, useState } from "react";
 import { StoreContext } from "contexts/store/store.context";
 import { isEmpty } from "utils";
+import { createCoffeeStore as createCS } from "hooks/requests/requests";
 
 export async function getStaticProps(staticProps) {
 	const { params } = staticProps;
@@ -38,18 +39,32 @@ export async function getStaticPaths() {
 
 const CoffeeStore = props => {
 	const { state } = useContext(StoreContext);
-	const [coffeeStore, setCoffeeStore] = useState(props.coffeeStore);
+	const [coffeeStore, setCoffeeStore] = useState(props.coffeeStore || {});
 
 	const router = useRouter();
 	const id = router.query.id;
 	const coffeeStores = selectCoffeeStores(state);
+
 	const handleUpvoteButton = () => {};
-	const { address, neighborhood, name, imgUrl } = coffeeStore;
+
+	const handleCreateCoffeeStore = async coffeeStore => {
+		const coffeeStoreDataForCreation = { ...coffeeStore, vote: 0 };
+		const response = await createCS(coffeeStoreDataForCreation);
+		if (!response) {
+			console.log("Could not create the coffee store");
+		} else {
+			setCoffeeStore({ ...coffeeStore, vote: response.vote });
+		}
+	};
+
+	const { address, neighborhood, name, vote, imgUrl } = coffeeStore ?? {};
 
 	useEffect(() => {
 		if (isEmpty(coffeeStore)) {
 			const cs = coffeeStores.find(store => store.id === id);
-			setCoffeeStore(cs);
+			if (cs) handleCreateCoffeeStore(cs);
+		} else {
+			handleCreateCoffeeStore(coffeeStore);
 		}
 	}, []);
 
@@ -95,7 +110,7 @@ const CoffeeStore = props => {
 					)}
 					<div className={styles.iconWrapper}>
 						<Image src="/static/icons/star.svg" width={24} height={24} />
-						<p className={styles.text}>{1}</p>
+						<p className={styles.text}>{vote || 0}</p>
 					</div>
 					<button className={styles.upvoteButton} onClick={handleUpvoteButton}>
 						Up Vote!

@@ -23,7 +23,6 @@ export async function getStaticProps(context) {
 export default function Home(props) {
 	const { dispatch, state } = useContext(StoreContext);
 	const coffeeStores = selectCoffeeStores(state);
-	console.log({coffeeStores, state})
 	const [title, setTitle] = useState("Toronto Coffee Stores");
 	const [coffeeSotoresError, setCoffeeStoresError] = useState(null);
 	const { handleTrackLocation, latLong, locationErrorMsg, isFindingLocation } = useTrackLocation();
