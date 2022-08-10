@@ -32,7 +32,7 @@ export default function Home(props) {
 	};
 
 	const handleLatLongChange = async () => {
-		const response = await fetch(`/api/getCoffeeStoresByLocation?latLong=${latLong}&limit=30`);
+		const response = await fetch(`/api/get-coffee-stores-by-location?latLong=${latLong}&limit=30`);
 		const data = await response.json();
 		// const data = await fetchCoffeeStores(latLong, 30);
 		if (data && data.length > 0) {

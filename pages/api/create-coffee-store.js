@@ -1,9 +1,11 @@
 import { createCoffeeStore as createCoffeeStoreAirtable, findCoffeeStoreById } from "lib/airtable";
+import { missingCredentialsResponse, wrongMethodResponse } from "utils/http-responses";
+
 
 export default async function createCoffeeStore(req, res) {
-	if (req.method !== "POST") return res.status(400).json({ message: "Only POST requests allowed" });
+	if (req.method !== "POST") return wrongMethodResponse(res, 'POST');
 	const { coffeeStore } = req.body;
-	if (!coffeeStore.id || !coffeeStore.name) return res.status(400).json({ message: "Missing Credentials" });
+	if (!coffeeStore.id || !coffeeStore.name) return missingCredentialsResponse(res);
 	try {
 		const findCoffeeStoreRecords = await findCoffeeStoreById(coffeeStore.id);
 		if (findCoffeeStoreRecords) {
