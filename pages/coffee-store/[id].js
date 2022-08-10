@@ -9,7 +9,8 @@ import { selectCoffeeStores } from "contexts/store/store.selectors";
 import { useContext, useEffect, useState } from "react";
 import { StoreContext } from "contexts/store/store.context";
 import { isEmpty } from "utils";
-import { createCoffeeStore as createCS } from "hooks/requests/requests";
+import { createCoffeeStore as createCS, favoriteCoffeeStore } from "hooks/requests/requests";
+import useSWR from "swr";
 
 export async function getStaticProps(staticProps) {
 	const { params } = staticProps;
@@ -40,12 +41,19 @@ export async function getStaticPaths() {
 const CoffeeStore = props => {
 	const { state } = useContext(StoreContext);
 	const [coffeeStore, setCoffeeStore] = useState(props.coffeeStore || {});
+	const [votingCount, setVotingCount] = useState(coffeeStore.vote || 0);
 
 	const router = useRouter();
 	const id = router.query.id;
 	const coffeeStores = selectCoffeeStores(state);
 
-	const handleUpvoteButton = () => {};
+	const handleUpvoteButton = async () => {
+		const response = await favoriteCoffeeStore(coffeeStore.id);
+		console.log(response);
+		if(response) {
+			setVotingCount(response.vote);
+		}
+	};
 
 	const handleCreateCoffeeStore = async coffeeStore => {
 		const coffeeStoreDataForCreation = { ...coffeeStore, vote: 0 };
@@ -57,18 +65,35 @@ const CoffeeStore = props => {
 		}
 	};
 
-	const { address, neighborhood, name, vote, imgUrl } = coffeeStore ?? {};
+	const { address, neighborhood, name, imgUrl } = coffeeStore ?? {};
+
+	const { data: swrData, error: swrError } = useSWR(`/api/get-coffee-store-by-id?id=${id}`, url => fetch(url).then(res => res.json()));
 
 	useEffect(() => {
 		if (isEmpty(coffeeStore)) {
 			const cs = coffeeStores.find(store => store.id === id);
-			if (cs) handleCreateCoffeeStore(cs);
+			if (cs) {
+				handleCreateCoffeeStore(cs);
+				setCoffeeStore(cs);
+			}
 		} else {
 			handleCreateCoffeeStore(coffeeStore);
 		}
 	}, []);
 
+	useEffect(() => {
+		if (swrData && swrData.length > 0) {
+			console.log("data from swr", swrData);
+			setCoffeeStore(swrData[0]);
+		}
+	}, [swrData]);
+
+	useEffect(() => {
+		setVotingCount(coffeeStore.vote);
+	}, [coffeeStore]);
+
 	if (router.isFallback) return <div>Loading</div>;
+	if (swrError) return <div>Something went wrong</div>;
 	return (
 		<div className={styles.layout}>
 			<Head>
@@ -110,7 +135,7 @@ const CoffeeStore = props => {
 					)}
 					<div className={styles.iconWrapper}>
 						<Image src="/static/icons/star.svg" width={24} height={24} />
-						<p className={styles.text}>{vote || 0}</p>
+						<p className={styles.text}>{votingCount || 0}</p>
 					</div>
 					<button className={styles.upvoteButton} onClick={handleUpvoteButton}>
 						Up Vote!
