@@ -39,6 +39,8 @@
   .storeImgWrapper {
     padding-top: 1rem /* 16px */;
     padding-bottom: 1rem /* 16px */;
+    width: 600px;
+    height: 360px;
   }
   
   .storeImg {
