@@ -6,7 +6,7 @@ import styles from "@styles/coffee-store.module.css";
 import cls from "classnames";
 import { fetchCoffeeStores } from "lib/coffee-stores";
 import { selectCoffeeStores } from "contexts/store/store.selectors";
-import { useContext, useEffect, useLayoutEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { StoreContext } from "contexts/store/store.context";
 import { isEmpty } from "utils";
 import { createCoffeeStore as createCS, favoriteCoffeeStore } from "hooks/requests/requests";
@@ -41,9 +41,8 @@ export async function getStaticPaths() {
 const CoffeeStore = props => {
 	const { state } = useContext(StoreContext);
 	const [coffeeStore, setCoffeeStore] = useState(props.coffeeStore || {});
-	const [votingCount, setVotingCount] = useState(coffeeStore.vote || 0);
+	const [votingCount, setVotingCount] = useState(coffeeStore.vote ?? 0);
 	const [timeoutsForRequest, setTimeoutsForRequest] = useState();
-
 	const router = useRouter();
 	const id = router.query.id;
 	const coffeeStores = selectCoffeeStores(state);
@@ -54,7 +53,7 @@ const CoffeeStore = props => {
 	const handleCreateCoffeeStore = async coffeeStore => {
 		const coffeeStoreDataForCreation = { ...coffeeStore, vote: 0 };
 		const response = await createCS(coffeeStoreDataForCreation);
-		if (response) setCoffeeStore({ ...coffeeStore, vote: response.vote });
+		if (response) setCoffeeStore(coffeeStore);
 	};
 
 	const { address, neighborhood, name, imgUrl } = coffeeStore ?? {};
@@ -73,20 +72,20 @@ const CoffeeStore = props => {
 	}, []);
 
 	useEffect(() => {
-		if (swrData && !isEmpty(swrData)) {
+		if (swrData && !isEmpty(swrData) && !("message" in swrData)) {
 			setCoffeeStore(swrData);
 			setVotingCount(swrData.vote);
 		}
 	}, [swrData]);
 
 	useEffect(() => {
-		setVotingCount(coffeeStore.vote);
-	}, [coffeeStore]);
+		if (coffeeStore.vote) setVotingCount(coffeeStore.vote);
+	}, [coffeeStore.vote]);
 
 	useEffect(() => {
-		if (!isNaN(coffeeStore.vote) && votingCount !== coffeeStore.vote) {
+		if (!isNaN(coffeeStore.vote) && !isEmpty(coffeeStore) && votingCount !== coffeeStore.vote) {
 			const timeout = setTimeout(async () => {
-				await favoriteCoffeeStore(coffeeStore.id, votingCount);
+				await favoriteCoffeeStore(id, votingCount);
 			}, 500);
 			if (timeoutsForRequest) clearTimeout(timeoutsForRequest);
 			setTimeoutsForRequest(preTimeout => timeout);
