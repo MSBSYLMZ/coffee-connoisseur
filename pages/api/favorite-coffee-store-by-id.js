@@ -3,15 +3,15 @@ import { failedResponse, missingCredentialsResponse, recordDontExistsResponse, s
 
 export default async function handler(req, res) {
 	if (req.method !== "PUT") return wrongMethodResponse(res, "PUT");
-	const { id } = req.body;
-	if (!id) return missingCredentialsResponse(res);
+	const { id, vote } = req.body;
+	if (!id || !vote) return missingCredentialsResponse(res);
 
 	try {
-		const record = await findCoffeeStoreById(id);
+		const record = await findCoffeeStoreById(id,vote);
 		!record && recordDontExistsResponse(res);
-		const updatedItem = await incrementVoting(record.recordId, +record.vote);
+		const updatedItem = await incrementVoting(record.recordId, +vote);
 		if (!updatedItem) throw Error(`Can't update the record`);
-		return successfulResponse(res, {...record, vote: +record.vote + 1});
+		return successfulResponse(res, updatedItem);
 	} catch (error) {
 		console.log(error);
 		return failedResponse(res, error);

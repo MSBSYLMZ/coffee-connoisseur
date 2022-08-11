@@ -17,8 +17,8 @@ export async function createCoffeeStore(data) {
 	}
 }
 
-export async function favoriteCoffeeStore(id) {
-	const body = JSON.stringify({ id });
+export async function favoriteCoffeeStore(id, vote) {
+	const body = JSON.stringify({ id, vote });
     const options = {
 		method: "PUT",
 		headers: {
@@ -30,7 +30,6 @@ export async function favoriteCoffeeStore(id) {
 		const response = await fetch(`/api/favorite-coffee-store-by-id`, options);
 		if (!response.ok) throw Error("Could not favorite the coffee store");
 		const result = await response.json();
-        console.log(result);
 		return result;
 	} catch (error) {
 		return null;

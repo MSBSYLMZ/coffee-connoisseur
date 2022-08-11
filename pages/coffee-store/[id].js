@@ -6,7 +6,7 @@ import styles from "@styles/coffee-store.module.css";
 import cls from "classnames";
 import { fetchCoffeeStores } from "lib/coffee-stores";
 import { selectCoffeeStores } from "contexts/store/store.selectors";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useLayoutEffect, useState } from "react";
 import { StoreContext } from "contexts/store/store.context";
 import { isEmpty } from "utils";
 import { createCoffeeStore as createCS, favoriteCoffeeStore } from "hooks/requests/requests";
@@ -42,39 +42,30 @@ const CoffeeStore = props => {
 	const { state } = useContext(StoreContext);
 	const [coffeeStore, setCoffeeStore] = useState(props.coffeeStore || {});
 	const [votingCount, setVotingCount] = useState(coffeeStore.vote || 0);
+	const [timeoutsForRequest, setTimeoutsForRequest] = useState();
 
 	const router = useRouter();
 	const id = router.query.id;
 	const coffeeStores = selectCoffeeStores(state);
 
 	const handleUpvoteButton = async () => {
-		const response = await favoriteCoffeeStore(coffeeStore.id);
-		console.log(response);
-		if(response) {
-			setVotingCount(response.vote);
-		}
+		setVotingCount(preCount => preCount + 1);
 	};
-
 	const handleCreateCoffeeStore = async coffeeStore => {
 		const coffeeStoreDataForCreation = { ...coffeeStore, vote: 0 };
 		const response = await createCS(coffeeStoreDataForCreation);
-		if (!response) {
-			console.log("Could not create the coffee store");
-		} else {
-			setCoffeeStore({ ...coffeeStore, vote: response.vote });
-		}
+		if (response) setCoffeeStore({ ...coffeeStore, vote: response.vote });
 	};
 
 	const { address, neighborhood, name, imgUrl } = coffeeStore ?? {};
-
 	const { data: swrData, error: swrError } = useSWR(`/api/get-coffee-store-by-id?id=${id}`, url => fetch(url).then(res => res.json()));
 
 	useEffect(() => {
 		if (isEmpty(coffeeStore)) {
 			const cs = coffeeStores.find(store => store.id === id);
 			if (cs) {
-				handleCreateCoffeeStore(cs);
 				setCoffeeStore(cs);
+				handleCreateCoffeeStore(cs);
 			}
 		} else {
 			handleCreateCoffeeStore(coffeeStore);
@@ -82,15 +73,25 @@ const CoffeeStore = props => {
 	}, []);
 
 	useEffect(() => {
-		if (swrData && swrData.length > 0) {
-			console.log("data from swr", swrData);
-			setCoffeeStore(swrData[0]);
+		if (swrData && !isEmpty(swrData)) {
+			setCoffeeStore(swrData);
+			setVotingCount(swrData.vote);
 		}
 	}, [swrData]);
 
 	useEffect(() => {
 		setVotingCount(coffeeStore.vote);
 	}, [coffeeStore]);
+
+	useEffect(() => {
+		if (!isNaN(coffeeStore.vote) && votingCount !== coffeeStore.vote) {
+			const timeout = setTimeout(async () => {
+				await favoriteCoffeeStore(coffeeStore.id, votingCount);
+			}, 500);
+			if (timeoutsForRequest) clearTimeout(timeoutsForRequest);
+			setTimeoutsForRequest(preTimeout => timeout);
+		}
+	}, [votingCount]);
 
 	if (router.isFallback) return <div>Loading</div>;
 	if (swrError) return <div>Something went wrong</div>;
