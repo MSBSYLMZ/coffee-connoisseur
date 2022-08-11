@@ -5,11 +5,12 @@ export const wrongMethodResponse = (res, method, message = null, statusCode = nu
 	res.status(statusCode ?? 400).json({ message: message ?? `Only ${method} requests allowed` });
 
 export const recordDontExistsResponse = (res, message = null, statusCode = null) =>
-	res.status(statusCode ?? 200).json({ message: message ?? `There is no item` });
+	res.status(statusCode ?? 404).json({ message: message ?? `There is no item` });
 
 export const successfulResponse = (res, data = null, statusCode = null) => {
 	res.status(statusCode ?? 200);
-	if (data) return res.json(data);
+	if (data) res.json(data);
+	return res;
 };
 
 export const failedResponse = (res, error, statusCode = null) => {
