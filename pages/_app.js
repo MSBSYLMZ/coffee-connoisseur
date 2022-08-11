@@ -1,4 +1,3 @@
-import { createContext, useReducer } from "react";
 import "../styles/globals.css";
 import { StoreProvider } from "contexts/store/store.context";
 

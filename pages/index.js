@@ -50,12 +50,12 @@ export default function Home(props) {
 	useEffect(() => {
 		if (!coffeeStores || coffeeStores.length < 1) dispatch(setCoffeeStores(props.coffeeStores));
 	}, []);
-
 	return (
 		<div className={styles.container}>
 			<Head>
 				<title>Home | Coffee Connoisseur</title>
 				<link rel="icon" href="/favicon.ico" />
+				<meta name="description" content="Discover coffee stores that near you."></meta>
 			</Head>
 			<main className={styles.main}>
 				<h1 className={styles.title}>Coffee Connoisseur</h1>
